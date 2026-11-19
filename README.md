@@ -8,7 +8,7 @@ OfficeTabs is a COM add-in that draws its own strip above the document area, so 
 document becomes a tab in the same window. Tabs shrink as you open more of them, drag to
 reorder, and can be pulled out into a separate window and dragged back.
 
-This is an early preview (0.33.2). Try it on documents you can afford to lose, and keep
+This is an early preview. Try it on documents you can afford to lose, and keep
 backups of anything that matters.
 
 ## What it does
@@ -42,13 +42,18 @@ installs for the current user only, under `%LOCALAPPDATA%\Programs\OfficeTabs`.
 
 ## Build
 
+You need Rust with the MSVC x64 toolchain (any recent stable), the Visual Studio 2022 C++
+build tools and a Windows 10/11 SDK for `link.exe`, `rc.exe` and `makecab`, Windows
+PowerShell, and Python 3.11 or newer. Office is not needed, and `Cargo.lock` is committed.
+
 ```powershell
 ./scripts/build.ps1
 ```
 
-Rust with the MSVC x64 toolchain, the Visual Studio 2022 C++ build tools and a Windows 10/11
-SDK are needed; Office is not. The result is one file,
-`target/OfficeTabs-Rust-<version>-Setup.exe`. [build.md](build.md) has the rest.
+One command: `cargo test --release`, builds the DLL, Manager and setup, authors the MSI,
+embeds it in `setup.exe`, runs the three audits and prints the SHA-256. The result is one
+file, `target/OfficeTabs-Rust-<version>-Setup.exe`; intermediates go to `%TEMP%` and are
+deleted, so there is no `dist/`. If `rc.exe` resolves to the wrong SDK, set `RC_EXE`.
 
 ## License
 
