@@ -1,0 +1,5 @@
+OfficeTabs 0.33 Native Preview
+Copyright (c) OfficeTabs. MIT License.
+Independent implementation. Not affiliated with ExtendOffice or Microsoft.
+Rust dependencies: windows-sys and windows-link by Microsoft, MIT OR Apache-2.0.
+See Cargo.lock and vendor license files in the developer archive.

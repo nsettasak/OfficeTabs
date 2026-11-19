@@ -1,0 +1,44 @@
+name: Windows build and audits
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: windows-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Set up tested Rust toolchain
+        run: |
+          rustup toolchain install 1.99.1 --profile minimal --component rustfmt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          rustup default 1.99.1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Format and source privacy
+        run: |
+          cargo fmt --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python privacy_audit.py --source
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Test and build without installing
+        run: ./build.ps1
+      - name: Verify MSI, native payload and privacy
+        run: |
+          ./audit-msi.ps1
+          python audit-artifacts.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python privacy_audit.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      # Deliberately no artifact uploads, ZIP creation or automatic publication.

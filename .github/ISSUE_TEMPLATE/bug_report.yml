@@ -1,0 +1,31 @@
+name: Bug report
+description: Report a reproducible OfficeTabs issue
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: "Use disposable documents. Remove personal names, paths and document contents from evidence. Do not report security vulnerabilities publicly; see SECURITY.md."
+  - type: input
+    id: version
+    attributes:
+      label: OfficeTabs version
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Windows build, Word/Excel build and bitness, monitor layout and DPI scales.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps, expected result and actual result
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized evidence (optional)
+      description: Do not attach production documents or full unsanitized logs.
