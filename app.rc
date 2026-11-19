@@ -1,0 +1,4 @@
+#include "version.rc"
+#define RT_MANIFEST 24
+101 ICON "OfficeTabs.ico"
+1 RT_MANIFEST "app.manifest"
