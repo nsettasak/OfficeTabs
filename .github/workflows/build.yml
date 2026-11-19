@@ -1,0 +1,26 @@
+name: build
+
+# The build script is the product: it decides the payload, the MSI, and the
+# gates. Running it on a clean machine is the only way to know the installer
+# still builds for someone else.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rust
+        run: rustup update stable --no-self-update && rustup default stable
+      - name: Build installer
+        run: .\scripts\build.ps1
+      - name: Keep the installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: setup
+          path: target/OfficeTabs-Rust-*-Setup.exe
+          if-no-files-found: error

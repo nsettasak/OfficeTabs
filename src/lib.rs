@@ -8,6 +8,8 @@ pub mod model;
 pub mod native;
 #[cfg(windows)]
 pub mod placement;
+#[cfg(windows)]
+mod strip;
 
 #[cfg(windows)]
 pub mod ui;

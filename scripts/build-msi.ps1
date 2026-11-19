@@ -38,10 +38,16 @@ Row Feature @('Feature','Title','Description','Display','Level','Directory_','At
 Table FeatureComponents '`Feature_` CHAR(38) NOT NULL, `Component_` CHAR(72) NOT NULL PRIMARY KEY `Feature_`, `Component_`'
 function Component($id,$directory,$attributes,$key){Row Component @('Component','ComponentId','Directory_','Attributes','KeyPath') @($id,(GuidFor $id),$directory,$attributes,$key);Row FeatureComponents @('Feature_','Component_') @('Complete',$id)}
 Table File '`File` CHAR(72) NOT NULL, `Component_` CHAR(72) NOT NULL, `FileName` CHAR(255) NOT NULL LOCALIZABLE, `FileSize` LONG NOT NULL, `Version` CHAR(72), `Language` CHAR(20), `Attributes` SHORT, `Sequence` LONG NOT NULL PRIMARY KEY `File`'
+# Same tree in, same installer out: the cabinet records the source file times and
+# Windows Installer stamps the summary stream, so both get pinned instead of
+# carrying "when this machine happened to build". The published SHA-256 then
+# identifies the build, not the minute it ran.
+$stamp=[datetime]::SpecifyKind([datetime]'2026-01-01T00:00:00',[DateTimeKind]::Utc)
 $payload=@(@('f_dll','OfficeTabs.dll'),@('f_manager','OfficeTabs.Manager.exe'),@('f_uninstaller','uninstaller.exe'),@('f_license','LICENSE.txt'),@('f_icon','OfficeTabs.ico'))
 $ddf=@('.OPTION EXPLICIT','.Set Cabinet=on','.Set Compress=on','.Set CompressionType=MSZIP','.Set CabinetNameTemplate=OfficeTabs.cab',('.Set DiskDirectoryTemplate="'+$scratch+'"'),'.Set MaxDiskSize=0',('.Set RptFileName="'+(Join-Path $scratch 'cabinet.rpt')+'"'),('.Set InfFileName="'+(Join-Path $scratch 'cabinet.inf')+'"'))
 $sequence=0
-foreach($item in $payload){$sequence++;$id=$item[0];$file=Get-Item -LiteralPath (Join-Path $out $item[1]);Component ('c_'+$id) 'INSTALLFOLDER' 0 $id;$version=$null;if($file.Extension -in @('.dll','.exe')){$version=$file.VersionInfo.FileVersion};Row File @('File','Component_','FileName','FileSize','Version','Attributes','Sequence') @($id,('c_'+$id),('F'+$sequence.ToString('000')+'.'+$file.Extension.TrimStart('.').Substring(0,[Math]::Min(3,$file.Extension.Length-1)).ToUpper()+'|'+$file.Name),[int]$file.Length,$version,512,$sequence);$ddf+=('"'+$file.FullName+'" '+$id)}
+foreach($item in $payload){(Get-Item -LiteralPath (Join-Path $out $item[1])).LastWriteTimeUtc=$stamp}
+foreach($item in $payload){$sequence++;$id=$item[0];$file=Get-Item -LiteralPath (Join-Path $out $item[1]);Component ('c_'+$id) 'INSTALLFOLDER' 0 $id;$fileVersion=$null;if($file.Extension -in @('.dll','.exe')){$fileVersion=$file.VersionInfo.FileVersion};Row File @('File','Component_','FileName','FileSize','Version','Attributes','Sequence') @($id,('c_'+$id),('F'+$sequence.ToString('000')+'.'+$file.Extension.TrimStart('.').Substring(0,[Math]::Min(3,$file.Extension.Length-1)).ToUpper()+'|'+$file.Name),[int]$file.Length,$fileVersion,512,$sequence);$ddf+=('"'+$file.FullName+'" '+$id)}
 $ddfPath=Join-Path $scratch 'payload.ddf';$ddf|Set-Content -LiteralPath $ddfPath -Encoding ascii
 & makecab.exe /F $ddfPath | Out-File -LiteralPath (Join-Path $scratch 'makecab.log')
 if($LASTEXITCODE -ne 0){throw 'Cabinet creation failed'}
@@ -216,7 +222,8 @@ while($dialogRecord=$dialogView.Fetch()){
  }
 }
 [void]$dialogView.Close()
-$summary=$db.SummaryInformation(20);$summary.Property(2)='OfficeTabs Installation';$summary.Property(3)='OfficeTabs '+$versionMinor;$summary.Property(4)='OfficeTabs';$summary.Property(7)='x64;1033';$summary.Property(9)=([Guid]::NewGuid().ToString('B').ToUpper());$summary.Property(14)=200;$summary.Property(15)=2;$summary.Property(18)='OfficeTabs MSI build';$summary.Persist()
+$package=GuidFor ('Package.'+$version)
+$summary=$db.SummaryInformation(20);$summary.Property(2)='OfficeTabs Installation';$summary.Property(3)='OfficeTabs '+$versionMinor;$summary.Property(4)='OfficeTabs';$summary.Property(7)='x64;1033';$summary.Property(9)=$package;$summary.Property(14)=200;$summary.Property(15)=2;$summary.Property(18)='OfficeTabs MSI build';$summary.Persist()
 $db.Commit()
 [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($db)
 [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($engine)

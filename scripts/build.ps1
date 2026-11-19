@@ -7,7 +7,7 @@ Push-Location $root
 $stage=Join-Path ([IO.Path]::GetTempPath()) ('OfficeTabs-build-'+[guid]::NewGuid().ToString('N'))
 $previousRustFlags=$env:CARGO_ENCODED_RUSTFLAGS
 try {
- $env:CARGO_ENCODED_RUSTFLAGS=@('-C','target-feature=+crt-static',('--remap-path-prefix='+$env:USERPROFILE+'=/build-user'),('--remap-path-prefix='+$root+'=/officetabs')) -join [char]31
+ $env:CARGO_ENCODED_RUSTFLAGS=@('-C','target-feature=+crt-static','-C','link-arg=/Brepro',('--remap-path-prefix='+$env:USERPROFILE+'=/build-user'),('--remap-path-prefix='+$root+'=/officetabs')) -join [char]31
  New-Item -ItemType Directory -Force $stage | Out-Null
  Remove-Item Env:OFFICETABS_MSI -ErrorAction SilentlyContinue
  # --release so the tests reuse the same dependency tree as the product build;
